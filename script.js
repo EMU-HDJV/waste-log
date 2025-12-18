@@ -1,6 +1,6 @@
 let data = [];
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxCEce9Q7OZhbwpJ5id9udvUogf3Z2OkBEeZj1C7KV1Hr4SSTFYLThZFgxjGRODOGo-/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzZpJO0yqRe_YAbX-yOii34PK4yLCKq3Lv2lF1twDBzI-fGwUIuRkXzUCYSiXKxeF5w/exec";
 
 async function addEntry() {
   const date = document.getElementById("date").value;
@@ -88,4 +88,5 @@ function exportExcel() {
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
 
