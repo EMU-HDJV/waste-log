@@ -1,30 +1,57 @@
 let data = [];
+let currentUserEmail = "Guest"; // Default if login isn't used
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbxTzFIX6K7a5L_qopkrjTGTvKv1pV6_TonqnfbUFtG6pWdFR7dsyhn82g6H-vYrhsvx/exec";
 
+// --- 1. GOOGLE LOGIN HANDLER ---
+function handleCredentialResponse(response) {
+  const responsePayload = parseJwt(response.credential);
+  
+  // List of people allowed to use the site
+  const authorizedUsers = ["your-email@gmail.com", "worker1@gmail.com"];
+  
+  if (authorizedUsers.includes(responsePayload.email)) {
+    currentUserEmail = responsePayload.email; // Capture the email
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("form-section").style.display = "block";
+    document.getElementById("status").innerText = "Welcome, " + responsePayload.name;
+  } else {
+    alert("Unauthorized user.");
+  }
+}
+
+function parseJwt(token) {
+  var base64Url = token.split('.')[1];
+  var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
+}
+
+// --- 2. DATA ENTRY HANDLER ---
 async function addEntry() {
   const date = document.getElementById("date").value;
   const volume = document.getElementById("volume").value;
   const waste = document.getElementById("waste").value;
   const statusText = document.getElementById("status");
 
-  // Basic Validation
   if (!date || !volume || !waste) {
     alert("Please complete all fields");
     return;
   }
 
+  // WE ADD userEmail HERE SO GOOGLE SHEETS KNOWS WHO DID IT
   const rowData = {
     date: date,
     volume: volume,
-    waste: waste
+    waste: waste,
+    userEmail: currentUserEmail 
   };
 
-  // 1. UI Feedback: Show "Sending..."
   statusText.innerText = "Syncing with Google Sheets...";
   statusText.style.color = "#1976d2";
 
-  // 2. Send to Google Sheets
   fetch(scriptURL, {
     method: 'POST',
     mode: 'no-cors', 
@@ -35,56 +62,41 @@ async function addEntry() {
   .then(() => {
     statusText.innerText = "✅ Successfully saved to Cloud";
     statusText.style.color = "#2e7d32";
-    // Clear message after 3 seconds
     setTimeout(() => { statusText.innerText = ""; }, 3000);
   })
   .catch(error => {
-    statusText.innerText = "❌ Sync Error (Saved locally only)";
-    statusText.style.color = "#d32f2f";
+    statusText.innerText = "❌ Sync Error";
     console.error("Error!", error.message);
   });
 
-  // 3. Update Local Table (Recent first)
   data.push(rowData);
   const tbody = document.querySelector("#table tbody");
-  const row = tbody.insertRow(0); // Add to top for mobile view
-  
+  const row = tbody.insertRow(0);
   row.insertCell(0).innerText = date;
   row.insertCell(1).innerText = volume;
   row.insertCell(2).innerText = waste;
 
-  // 4. Clear inputs after adding
   document.getElementById("date").value = "";
   document.getElementById("volume").value = "";
   document.getElementById("waste").value = "";
 }
 
+// --- 3. EXPORT HANDLER ---
 function exportExcel() {
   if (data.length === 0) {
-    alert("No data to export yet!");
+    alert("No data to export!");
     return;
   }
-
-  // Header row
-  let csv = "Date,Volume (kg),Waste Name\n";
-  
-  // Data rows with quotes to protect commas in waste names
+  let csv = "Date,Volume (kg),Waste Name,Logged By\n";
   data.forEach(row => {
-    csv += `"${row.date}","${row.volume}","${row.waste}"\n`;
+    csv += `"${row.date}","${row.volume}","${row.waste}","${row.userEmail}"\n`;
   });
-
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = window.URL.createObjectURL(blob);
-
   const a = document.createElement("a");
-  a.style.display = 'none';
   a.href = url;
-  a.download = `hazardous_waste_log_${new Date().toISOString().slice(0,10)}.csv`;
-  
+  a.download = `waste_log_${new Date().toISOString().split('T')[0]}.csv`;
   document.body.appendChild(a);
   a.click();
-  
-  // Clean up
-  window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
