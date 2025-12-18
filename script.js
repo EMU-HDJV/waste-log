@@ -23,7 +23,7 @@ function handleCredentialResponse(response) {
   const responsePayload = parseJwt(response.credential);
   
   // ADD AUTHORIZED EMAILS HERE
-  const authorizedUsers = ["francisalbertespina@gmai.com", "sanpabloshan@gmail.com"];
+  const authorizedUsers = ["francisalbertespina@gmail.com", "sanpabloshan@gmail.com"];
   
   if (authorizedUsers.includes(responsePayload.email)) {
     currentUserEmail = responsePayload.email;
@@ -116,3 +116,4 @@ function exportExcel() {
   a.click();
   document.body.removeChild(a);
 }
+
