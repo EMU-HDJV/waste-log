@@ -1,6 +1,6 @@
 let data = [];
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbzJmIdB5hvmQr4JkYlSUYdkX3xE9FRzdE-T0txhnrECuZwKKZedAgoZbKHN6aF5yKkz/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxTzFIX6K7a5L_qopkrjTGTvKv1pV6_TonqnfbUFtG6pWdFR7dsyhn82g6H-vYrhsvx/exec";
 
 function addEntry() {
   const date = document.getElementById("date").value;
@@ -47,3 +47,4 @@ function exportExcel() {
   a.download = "waste_log.csv";
   a.click();
 }
+
