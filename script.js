@@ -1,4 +1,4 @@
-let data = [];
+const scriptURL = "https://script.google.com/macros/s/AKfycbzJmIdB5hvmQr4JkYlSUYdkX3xE9FRzdE-T0txhnrECuZwKKZedAgoZbKHN6aF5yKkz/exec";
 
 function addEntry() {
   const date = document.getElementById("date").value;
@@ -10,38 +10,29 @@ function addEntry() {
     return;
   }
 
-  // ONE OBJECT = ONE ROW
-  const rowData = {
-    date: date,
-    volume: volume,
-    waste: waste
-  };
+  fetch(scriptURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      date: date,
+      volume: volume,
+      waste: waste
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "success") {
+      alert("Saved successfully");
+    } else {
+      alert("Error: " + data.message);
+    }
+  })
+  .catch(err => alert("Request failed"));
 
-  data.push(rowData);
-
-  const tbody = document.querySelector("#table tbody");
-  const row = tbody.insertRow();
-  row.insertCell(0).innerText = date;
-  row.insertCell(1).innerText = volume;
-  row.insertCell(2).innerText = waste;
-
-  // Clear inputs after adding
+  // Clear inputs
   document.getElementById("date").value = "";
   document.getElementById("volume").value = "";
   document.getElementById("waste").value = "";
-}
-
-function exportExcel() {
-  let csv = "Date,Volume,Waste Name\n";
-  data.forEach(row => {
-    csv += `${row.date},${row.volume},${row.waste}\n`;
-  });
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "waste_log.csv";
-  a.click();
 }
