@@ -1,25 +1,42 @@
 let data = [];
-let currentUserEmail = "Guest"; // Default if login isn't used
+let currentUserEmail = "Guest";
 
+// Your Google Script URL
 const scriptURL = "https://script.google.com/macros/s/AKfycbxTzFIX6K7a5L_qopkrjTGTvKv1pV6_TonqnfbUFtG6pWdFR7dsyhn82g6H-vYrhsvx/exec";
 
-// --- 1. GOOGLE LOGIN HANDLER ---
+// --- 1. INITIALIZE LOGIN ---
+window.onload = function () {
+  google.accounts.id.initialize({
+    // YOUR CLIENT ID PLACED HERE
+    client_id: "684419504896-grfb9t1gdj7jfkdk2c6ns3aeptkbd17f.apps.googleusercontent.com",
+    callback: handleCredentialResponse
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById("buttonDiv"),
+    { theme: "outline", size: "large" } 
+  );
+};
+
+// --- 2. GOOGLE LOGIN HANDLER ---
 function handleCredentialResponse(response) {
   const responsePayload = parseJwt(response.credential);
   
-  // List of people allowed to use the site
-  const authorizedUsers = ["your-email@gmail.com", "worker1@gmail.com"];
+  // ADD AUTHORIZED EMAILS HERE
+  const authorizedUsers = ["francisalbertespina@gmai.com", "sanpabloshan@gmail.com"];
   
   if (authorizedUsers.includes(responsePayload.email)) {
-    currentUserEmail = responsePayload.email; // Capture the email
+    currentUserEmail = responsePayload.email;
     document.getElementById("login-section").style.display = "none";
     document.getElementById("form-section").style.display = "block";
     document.getElementById("status").innerText = "Welcome, " + responsePayload.name;
+    document.getElementById("status").style.color = "#2e7d32";
   } else {
-    alert("Unauthorized user.");
+    alert("Unauthorized user: " + responsePayload.email);
   }
 }
 
+// Token parser
 function parseJwt(token) {
   var base64Url = token.split('.')[1];
   var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -29,7 +46,7 @@ function parseJwt(token) {
   return JSON.parse(jsonPayload);
 }
 
-// --- 2. DATA ENTRY HANDLER ---
+// --- 3. DATA ENTRY HANDLER ---
 async function addEntry() {
   const date = document.getElementById("date").value;
   const volume = document.getElementById("volume").value;
@@ -41,7 +58,6 @@ async function addEntry() {
     return;
   }
 
-  // WE ADD userEmail HERE SO GOOGLE SHEETS KNOWS WHO DID IT
   const rowData = {
     date: date,
     volume: volume,
@@ -62,7 +78,7 @@ async function addEntry() {
   .then(() => {
     statusText.innerText = "✅ Successfully saved to Cloud";
     statusText.style.color = "#2e7d32";
-    setTimeout(() => { statusText.innerText = ""; }, 3000);
+    setTimeout(() => { statusText.innerText = "Logged in as: " + currentUserEmail; }, 3000);
   })
   .catch(error => {
     statusText.innerText = "❌ Sync Error";
@@ -81,7 +97,7 @@ async function addEntry() {
   document.getElementById("waste").value = "";
 }
 
-// --- 3. EXPORT HANDLER ---
+// --- 4. EXPORT HANDLER ---
 function exportExcel() {
   if (data.length === 0) {
     alert("No data to export!");
